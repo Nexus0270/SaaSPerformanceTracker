@@ -1,0 +1,40 @@
+// changes 20/6
+
+1. app.py
+-Booth Health Logic Refinement:
+The booth_health() Flask route was significantly updated to calculate various performance metrics for all booths (Total Sales, Days Active, Avg. Sales per Day, Last Active Date).
+The logic for identifying "underperforming booths" was changed from a general UNDERPERFORMING_THRESHOLD_SALES_PER_DAY to a direct comparison between "Booth A" and "Booth B" sales.
+A new variable, underperforming_comparison_message, is now generated in Python to describe the outcome of this specific A vs. B comparison (e.g., "Booth B has lower sales..." or "Booths A and B have equal sales."). This message is passed to the frontend.
+The underperforming_booths list now contains only the booth(s) identified as lower-performing in the A vs. B comparison.
+
+- New API Endpoint for Attendance Details:
+A new route, get_booth_attendance/<int:booth_id>, was added to allow the frontend to dynamically fetch attendance records for a specific booth.
+This API returns structured JSON data for attendance, including date, participating users, present count, and total count.
+
+- Enhanced Database Initialization (initdb_command):
+The dummy data within flask initdb was adjusted to create a scenario where "Booth B" has notably lower total sales than "Booth A," facilitating testing of the new comparison logic.
+Dummy attendance data for Booth C was added to ensure it's included in overall stats, even without sales.
+Security: Ensured login_required and admin role checks for the new booth health and attendance routes.
+
+
+2. booth_health.html
+- Underperforming Section Transformation:
+The main <h2> heading for the "Underperforming Booths" section was updated to explicitly state: Underperforming Booths (Comparison between Booth A and Booth B).
+The informational message displayed above the underperforming table (or when no booths are underperforming in the comparison) now uses the underperforming_comparison_message variable passed from app.py, providing dynamic feedback about the A vs. B results.
+
+- Dynamic Content Handling:
+Maintained and reinforced conditional rendering ({% if ... %} {% else %}) for all sections (Booth Summary Cards, Underperforming Booths Table, Attendance Records Container) to ensure graceful display of "no data" messages and consistent UI structure.
+Ensured table headers are always rendered even if the table body is empty.
+Improved JavaScript Messaging:
+Replaced native alert() calls in the JavaScript for attendance record fetching with a custom displayMessage() function. This function shows more user-friendly, Bootstrap-styled dismissible alerts directly within the page, improving UI/UX.
+
+- Chart Data Alignment:
+The Chart.js initialization in JavaScript was updated to ensure it correctly references the avg_sales_per_day attribute from the all_booth_performance data passed from Flask.
+Added a fallback for the chart to display "No data available for chart." on the canvas if all_booth_performance is empty.
+Dropdown Source: The "Select a booth..." dropdown now correctly iterates over all_booth_performance for populating its options.
+Styling Consistency: Minor CSS adjustments were made within the HTML's <style> block to ensure visual consistency and responsiveness, aligning with a Bootstrap-like aesthetic for new elements and messages.
+
+
+3. admin_dashboard.html
+- No direct changes were made to admin_dashboard.html during this series of interactions.
+Our focus has been exclusively on the booth_health route and its associated frontend.

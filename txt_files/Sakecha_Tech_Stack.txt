@@ -1,0 +1,97 @@
+
+SAKECHA APP - TECHNOLOGY STACK
+
+=== BACKEND ===
+Framework: Flask (Python web framework)
+Language: Python
+Authentication: Flask-Login (user session management)
+Password Security: Werkzeug Security (password hashing)
+Database ORM: SQLAlchemy with Flask-SQLAlchemy
+Date/Time: Python datetime module
+File I/O: Python io module (BytesIO)
+Email: Python smtplib with EmailMessage
+Environment Variables: python-dotenv
+Random Generation: Python random module
+Error Handling: Python traceback module
+
+=== FRONTEND ===
+Template Engine: Jinja2 (Flask's default templating)
+HTML Templates: 
+- Base template with inheritance
+- Form-based interfaces
+- Dashboard interfaces
+- Report generation templates
+Styling: HTML/CSS (implied from template structure)
+JavaScript: Client-side interactions (form submissions, AJAX calls)
+PDF Generation: pdfkit (for report generation)
+
+=== DATABASE ===
+Database System: PostgreSQL
+Connection String: postgresql://postgres:0000@localhost/sakecha
+Database Tables:
+- booths
+- users  
+- sales_entries
+- attendance_logs
+- ingredient_reorders
+- booth_change_requests
+
+ORM Models:
+- Booth
+- User (with UserMixin for Flask-Login)
+- SalesEntry
+- AttendanceLog
+- IngredientReorder
+- BoothChangeRequest
+
+=== SYSTEM TOOLS & UTILITIES ===
+PDF Generation: wkhtmltopdf (external binary)
+SMTP Server: Gmail SMTP (smtp.gmail.com:587)
+Environment Configuration: .env file support
+CLI Commands: Flask CLI commands (initdb)
+Development Server: Flask development server
+Session Management: Flask sessions with secret key
+Database Migration: SQLAlchemy database operations
+
+=== SECURITY FEATURES ===
+Password Hashing: Werkzeug generate_password_hash/check_password_hash
+Session Management: Flask-Login user sessions
+Role-Based Access: Admin/Franchisee role separation
+Password Reset: Token-based password reset with email
+Account Approval: Admin approval required for new accounts
+CSRF Protection: Flask form handling
+Environment Variables: Sensitive data stored in .env
+
+=== API ENDPOINTS ===
+Authentication Routes:
+- /login, /register, /logout
+- /forgot_password, /reset_password
+- /profile
+
+Admin Routes:
+- /dashboard (admin view)
+- /users, /delete_user
+- /approve_user, /reject_user
+- /booth_health
+- /sales, /generate_report
+- /approve_booth_change, /reject_booth_change
+- /update_ingredient_status, /delete_ingredient_request
+
+Franchisee Routes:
+- /dashboard (franchisee view)
+- /sales_entry
+- /attendance_log
+- /ingredient_reorder
+- /request_booth_change
+
+API Routes:
+- /api/daily_sales
+- /api/attendance_records
+- /get_booth_attendance/<booth_id>
+
+=== DEVELOPMENT TOOLS ===
+Debug Mode: Flask debug mode enabled
+Database Initialization: CLI command for database setup
+Test Data: Dummy data generation for testing
+Error Handling: Comprehensive exception handling
+Logging: Print statements for email errors

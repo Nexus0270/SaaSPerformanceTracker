@@ -1,0 +1,99 @@
+
+SAKECHA APP - FOLDER STRUCTURE & FILE RELATIONSHIPS
+
+saas_finale/
+│
+├── app.py                                    [MAIN APPLICATION FILE]
+│   │
+│   ├── Flask Application Setup
+│   ├── Database Models (Booth, User, SalesEntry, AttendanceLog, IngredientReorder, BoothChangeRequest)
+│   ├── Authentication Routes (/login, /register, /logout, /forgot_password, /reset_password, /profile)
+│   ├── Admin Routes (/dashboard, /users, /booth_health, /sales, /generate_report)
+│   ├── Franchisee Routes (/sales_entry, /attendance_log, /ingredient_reorder)
+│   ├── API Routes (/api/daily_sales, /api/attendance_records)
+│   ├── Database CLI Commands (initdb)
+│   └── Email Functions (send_reset_email)
+│
+├── templates/                               [HTML TEMPLATE DIRECTORY]
+│   │
+│   ├── base.html                           [BASE TEMPLATE]
+│   │   └── Contains common layout, navigation, styling for all pages
+│   │       Used by: All other templates extend this
+│   │
+│   ├── login.html                          [LOGIN PAGE]
+│   │   └── Extends base.html
+│   │       Route: /login
+│   │
+│   ├── register.html                       [REGISTRATION PAGE]
+│   │   └── Extends base.html
+│   │       Route: /register
+│   │       Uses: Booth model for booth selection
+│   │
+│   ├── forgot_password.html                [PASSWORD RESET REQUEST]
+│   │   └── Extends base.html
+│   │       Route: /forgot_password
+│   │
+│   ├── reset_password.html                 [PASSWORD RESET FORM]
+│   │   └── Extends base.html
+│   │       Route: /reset_password
+│   │
+│   ├── admin_dashboard.html                [ADMIN MAIN DASHBOARD]
+│   │   └── Extends base.html
+│   │       Route: /dashboard (admin role)
+│   │       Data: sales_summary, late_reporters, ingredient_requests, pending_accounts
+│   │
+│   ├── franchisee_dashboard.html           [FRANCHISEE MAIN DASHBOARD]
+│   │   └── Extends base.html
+│   │       Route: /dashboard (franchisee role)
+│   │       Data: sales_entered, attendance_logged, ingredient_requests
+│   │
+│   ├── booth_health.html                   [BOOTH PERFORMANCE ANALYTICS]
+│   │   └── Extends base.html
+│   │       Route: /booth_health
+│   │       Data: booth_performance, underperforming_booths
+│   │
+│   ├── profile.html                        [USER PROFILE MANAGEMENT]
+│   │   └── Extends base.html
+│   │       Route: /profile
+│   │       Data: user info, booth change requests
+│   │
+│   ├── users.html                          [USER & BOOTH MANAGEMENT]
+│   │   └── Extends base.html
+│   │       Route: /users
+│   │       Data: all_users, booths_with_counts, booth assignments
+│   │
+│   ├── sales_entry_form.html               [SALES DATA ENTRY]
+│   │   └── Extends base.html
+│   │       Route: /sales_entry
+│   │       Creates: SalesEntry records
+│   │
+│   ├── attendance_log_form.html            [ATTENDANCE LOGGING]
+│   │   └── Extends base.html
+│   │       Route: /attendance_log
+│   │       Creates: AttendanceLog records
+│   │
+│   ├── ingredient_reorder_form.html        [INGREDIENT REQUEST FORM]
+│   │   └── Extends base.html
+│   │       Route: /ingredient_reorder
+│   │       Creates: IngredientReorder records
+│   │
+│   ├── admin_sales_page.html               [SALES DATA OVERVIEW]
+│   │   └── Extends base.html
+│   │       Route: /sales
+│   │       Data: all sales entries with timestamps
+│   │
+│   └── report.html                         [PDF REPORT TEMPLATE]
+│       └── Used by: /generate_report route
+│           Data: sales, attendance, ingredient_reorders
+│           Output: PDF file generation
+│
+├── static/                                 [STATIC FILES DIRECTORY]
+│   └── images/
+│       └── VVLogo.png                      [COMPANY LOGO]
+│           Used by: base.html template
+│
+├── .env                                    [ENVIRONMENT VARIABLES] (implied)
+│   └── Contains: SECRET_KEY, DATABASE_URL, SMTP configuration
+│
+└── FRANCHISEE PERFORMANCE TRACKER Architecture.pdf [DOCUMENTATION]
+    └── Contains: Database schema, relationships, route documentation
