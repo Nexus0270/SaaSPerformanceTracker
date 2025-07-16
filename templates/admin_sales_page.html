@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}SAKECHA Admin Sales Summary - {{ month }}{% endblock %}
+{% block content %}
+<h1>Sales Summary - {{ month }}</h1>
+<div class="table-responsive">
+  <table aria-label="Sales Summary Table" class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>Booth</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Drink</th>
+        <th>Quantity Sold</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for booth_name, date, timestamp, drink_name, quantity in sales_data %}
+      <tr>
+        <td>{{ booth_name }}</td>
+        <td>{{ date.strftime('%Y-%m-%d') }}</td>
+        <td>{{ timestamp.strftime('%H:%M:%S') }}</td>
+        <td>{{ drink_name }}</td>
+        <td>{{ quantity }}</td>
+      </tr>
+      {% else %} {# This 'else' block will execute if sales_data is empty #}
+      <tr>
+        <td colspan="5" class="text-center">No sales entries for this period.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if not sales_data %} {# This conditional message is now outside the table #}
+<div class="no-data">No sales data available for this period.</div>
+{% endif %}
+{% endblock %}s

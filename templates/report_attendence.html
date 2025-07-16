@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly Attendance Summary Report</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    inter: ['Inter', 'sans-serif'],
+                },
+                colors: {
+                    primary: '#3b82f6', // A nice blue for highlights
+                }
+            }
+        }
+    }
+</script>
+<style>
+    /* Custom styles for better readability and a professional look */
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f3f4f6; /* Light gray background */
+        color: #374151; /* Darker text for readability */
+        line-height: 1.6;
+    }
+    .container {
+        max-width: 90%;
+        margin: 40px auto;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 1rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    h1 {
+        color: #1f2937; /* Even darker for headings */
+        font-weight: 700; /* Bold */
+        text-align: center;
+        margin-bottom: 2rem;
+        border-bottom: 3px solid #3b82f6; /* Blue underline */
+        padding-bottom: 1rem;
+    }
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
+        color: #1f2937;
+        padding-left: 0.5rem;
+        border-left: 5px solid #3b82f6;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        border-radius: 0.5rem;
+        overflow: hidden; /* Ensures rounded corners apply to children */
+    }
+    th, td {
+        padding: 1.2rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    th {
+        background-color: #f9fafb;
+        color: #1f2937;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
+    }
+    tr:nth-child(even) {
+        background-color: #f3f4f6;
+    }
+    tr:hover {
+        background-color: #e5e7eb;
+    }
+    .status-pending {
+        color: #f59e0b; /* Amber */
+        font-weight: bold;
+    }
+    .status-approved {
+        color: #10b981; /* Green */
+        font-weight: bold;
+    }
+    .status-rejected {
+        color: #ef4444; /* Red */
+        font-weight: bold;
+    }
+    @media print {
+        body {
+            background-color: #fff;
+        }
+        .container {
+            box-shadow: none;
+            margin: 0;
+            padding: 0;
+        }
+    }
+    .text-center {
+        text-align: center;
+    }
+    .py-4 {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+</style>
+</head>
+<body class="bg-gray-100 font-inter">
+
+<div class="container bg-white rounded-2xl shadow-lg p-8">
+  <div class="header text-center">
+    <h1 class="text-4xl font-extrabold mb-4">Monthly Attendance Summary Report</h1>
+    <p class="text-lg text-gray-600">Generated for {{ month }}</p>
+  </div>
+
+  <div class="section-title">Attendance Records</div>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Booth</th>
+        <th>Date</th>
+        <th>Present</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in attendance %}
+      <tr>
+        <td data-label="User">{{ log.username }}</td>
+        <td data-label="Booth">{{ log.name }}</td>
+        <td data-label="Date">{{ log.date.strftime('%Y-%m-%d') }}</td>
+        <td data-label="Present">{{ 'Present' if log.present else 'Absent' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="text-center py-4">No attendance data available.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

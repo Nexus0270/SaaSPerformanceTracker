@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}SAKECHA Profile{% endblock %}
+{% block content %}
+<div class="profile-section" style="background:white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgb(0 0 0 / 0.05); margin-bottom: 30px;">
+  <h2>Profile Details</h2>
+  <div class="profile-detail" style="display:flex; margin-bottom: 15px;">
+    <strong style="width:120px; color:#4a5568;">Username:</strong>
+    <p style="margin:0; color:#2d3748;">{{ user.username }}</p>
+  </div>
+  <div class="profile-detail" style="display:flex; margin-bottom: 15px;">
+    <strong style="width:120px; color:#4a5568;">Email:</strong>
+    <p style="margin:0; color:#2d3748;">{{ user.email }}</p>
+  </div>
+  
+  <div class="profile-detail" style="display:flex; margin-bottom: 15px;">
+    <strong style="width:120px; color:#4a5568;">Current Booth:</strong>
+    <p style="margin:0; color:#2d3748;">
+      {% if is_franchisee %}
+        {{ user.booth.name if user.booth else 'No booth assigned' }}
+      {% else %}
+        No Booths for ADMIN
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+{% if is_franchisee %}
+<div class="form-section" style="background:white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgb(0 0 0 / 0.05); margin-bottom: 30px;">
+  <h3>Request Booth Change</h3>
+  <form id="booth-change-form">
+    <div class="mb-4">
+      <label for="boothSelect" class="form-label">Select New Booth</label>
+      <select id="boothSelect" name="booth_id" class="form-select" required>
+        <option value="" selected disabled>Select a booth</option>
+        {% for booth in all_booths %}
+          {% if user.booth and booth.id == user.booth.id %}
+            <option value="{{ booth.id }}" disabled>{{ booth.name }} (Current)</option>
+          {% else %}
+            <option value="{{ booth.id }}">{{ booth.name }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Request Booth Change</button>
+  </form>
+  <div id="booth-change-message" class="mt-3"></div>
+</div>
+{% endif %}
+
+<div class="form-section" style="background:white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgb(0 0 0 / 0.05); margin-bottom: 0;">
+  <h3>Change Password</h3>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {% if message %}
+    <div class="alert alert-danger">{{ message }}</div>
+  {% endif %}
+  <form method="post" action="{{ url_for('profile') }}">
+    <div class="mb-3">
+      <label for="current_password" class="form-label">Current Password</label>
+      <input type="password" name="current_password" id="current_password" class="form-control" required />
+    </div>
+    <div class="mb-3">
+      <label for="new_password" class="form-label">New Password</label>
+      <input type="password" name="new_password" id="new_password" class="form-control" required />
+    </div>
+    <div class="mb-4">
+      <label for="confirm_password" class="form-label">Confirm New Password</label>
+      <input type="password" name="confirm_password" id="confirm_password" class="form-control" required />
+    </div>
+    <button class="btn btn-primary" type="submit">Update Password</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('booth-change-form')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  fetch('/request_booth_change', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    const messageDiv = document.getElementById('booth-change-message');
+    if(data.success) {
+      messageDiv.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+      form.reset();
+    } else {
+      messageDiv.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+    }
+  })
+  .catch(() => {
+    document.getElementById('booth-change-message').innerHTML = '<div class="alert alert-danger">An error occurred.</div>';
+  });
+});
+</script>
+{% endblock %}

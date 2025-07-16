@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Create New Account</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-light d-flex align-items-center" style="height:100vh;">
+<div class="container col-md-4 p-4 bg-white rounded shadow">
+  <h2 class="mb-3 text-center">Create New Account</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  <form method="post" action="{{ url_for('register') }}">
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" name="username" class="form-control" id="username" required autofocus
+            value="{{ username|e }}" />
+      {% if username_exists %}
+        <div class="text-danger mt-1">Username already exists. Please choose another.</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" name="email" class="form-control" id="email" required value="{{ email|e }}" />
+      {% if email_exists %}
+        <div class="text-danger mt-1">Email already registered. Please use a different email.</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="booth_id" class="form-label">Booth</label>
+      <select name="booth_id" id="booth_id" class="form-select">
+        <option value="" {% if not selected_booth_id %}selected{% endif %}>-</option>
+        {% for booth in booths %}
+          <option value="{{ booth.id }}" {% if selected_booth_id and booth.id|string == selected_booth_id|string %}selected{% endif %}>{{ booth.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" name="password" class="form-control" id="password" required />
+    </div>
+    <button class="btn btn-primary w-100" type="submit">Create Account</button>
+  </form>
+  <p class="mt-3 text-center">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

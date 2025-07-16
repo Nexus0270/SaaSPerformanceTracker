@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}SAKECHA Franchisee Dashboard - {{ booth_name }}{% endblock %}
+{% block content %}
+<div class="container-fluid px-0">
+  <h3 class="mb-4">Welcome, {{ booth_name }}</h3>  <!-- Changed mb-3 to mb-4 for slightly more space -->
+
+  <div class="row justify-content-center">  <!-- Added justify-content-center to center horizontally -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title" style="color: #2d3748;">Daily Sales Entry</h5>
+          {% if sales_entered %}
+           <p class="text-success">✓ Sales entry submitted today</p>
+          {% else %}
+           <a href="{{ url_for('sales_entry') }}" class="btn btn-primary">Enter Sales</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title" style="color: #2d3748;">Attendance Log</h5>
+          {% if attendance_logged %}
+           <p class="text-success">✓ Attendance logged today</p>
+          {% else %}
+           <a href="{{ url_for('attendance_log') }}" class="btn btn-primary">Log Attendance</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title" style="color: #2d3748;">Ingredient Reorder</h5>
+          <a href="{{ url_for('ingredient_reorder') }}" class="btn btn-primary">Request Ingredients</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ingredient reorder requests section -->
+  <div class="row justify-content-center mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header" style="background-color: #6366f1; color: white;">
+          Your Ingredient Reorder Requests
+        </div>
+        <div class="card-body p-0">
+          {% if ingredient_requests %}
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Booth</th>
+                    <th>Date</th>
+                    <th>Ingredient</th>
+                    <th>Quantity</th>
+                    <th>Cost (RM)</th>
+                    <th>File</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for req in ingredient_requests %}
+                    <tr>
+                      <td>{{ req.booth.name }}</td>
+                      <td>{{ req.date.strftime('%Y-%m-%d') }}</td>
+                      <td>{{ req.ingredient_name }}</td>
+                      <td>{{ req.quantity }}</td>
+                      <td>RM{{ "%.2f"|format(req.cost) }}</td>
+                      <td>
+                        {% if req.receipt_filepath %}
+                          <a href="{{ url_for('view_receipt', request_id=req.id) }}" target="_blank" class="btn btn-sm btn-info">View Receipt</a>
+                        {% else %}
+                          No File
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-3 text-muted">
+              You have not made any ingredient reorder requests yet.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

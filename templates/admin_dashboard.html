@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}SAKECHA Admin Dashboard{% endblock %}
+{% block content %}
+<h1 class="mb-5">Dashboard Overview</h1>
+
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card stats-card" style="background-color: #6366f1; color:white; padding: 1.5rem; border-radius: 12px;">
+      <h5 class="card-title">Total Sales (This Month)</h5>
+      <p class="fs-2">{{ total_sales }}</p>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card stats-card" style="background-color: #10b981; color:white; padding: 1.5rem; border-radius: 12px;">
+      <h5 class="card-title">Top Booths (By Sales)</h5>
+      <div class="mt-3">
+        {% for booth, sales in sales_summary %}
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>{{ booth }}</span>
+            <span class="badge-status" style="background-color:#d1d5db; color:#4a5568; font-weight: 600; padding: 5px 10px; border-radius: 20px;">{{ sales }}</span>
+          </div>
+        {% else %}
+          <p class="mb-0">No sales data</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card stats-card" style="background-color: #f59e0b; color:white; padding: 1.5rem; border-radius: 12px;">
+      <h5 class="card-title">No Reports Yet (Today)</h5>
+      <div class="mt-3">
+        {% for booth in late_reporters %}
+          <div class="mb-2">{{ booth.name }}</div>
+        {% else %}
+          <p class="mb-0">All booths reported</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header" style="background-color: #6366f1; color: white;">
+        Ingredient Reorder Requests
+      </div>
+      <div class="card-body p-0">
+        {% if ingredient_requests %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Booth</th>
+                  <th>Date</th>
+                  <th>User</th>
+                  <th>Ingredient</th>
+                  <th>Quantity</th>
+                  <th>Cost (RM)</th>
+                  <th>File</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for req_id, booth, date, username, ingredient, quantity, cost, status, receipt_filepath in ingredient_requests %}
+                <tr>
+                  <td>{{ booth }}</td>
+                  <td>{{ date.strftime('%Y-%m-%d') }}</td>
+                  <td>{{ username }}</td>
+                  <td>{{ ingredient }}</td>
+                  <td>{{ quantity }}</td>
+                  <td>RM{{ "%.2f"|format(cost) }}</td>
+                  <td>
+                    {% if receipt_filepath %}
+                      <a href="{{ url_for('view_receipt', request_id=req_id) }}" target="_blank" class="btn btn-sm btn-info">View Receipt</a>
+                    {% else %}
+                      No File
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="p-3 text-muted">
+            No ingredient reorder requests this month.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header" style="background-color: #64748b; color: white;">
+    Approvals
+  </div>
+  <div class="card-body p-0">
+    {% if pending_accounts or pending_booth_changes %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Type of Approval</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Booth</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in pending_accounts %}
+            <tr>
+              <td>Account Creation</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.booth.name if user.booth else '-' }}</td>
+              <td>
+                <button class="btn btn-success btn-sm me-2" onclick="approveItem({{ user.id }}, 'account')">Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="rejectItem({{ user.id }}, 'account')">Reject</button>
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% for req_id, username, requested_booth_name in pending_booth_changes %}
+            <tr>
+              <td>Booth Change</td>
+              <td>{{ username }}</td>
+              <td>-</td>
+              <td>{{ requested_booth_name }}</td>
+              <td>
+                <button class="btn btn-success btn-sm me-2" onclick="approveItem({{ req_id }}, 'booth_change')">Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="rejectItem({{ req_id }}, 'booth_change')">Reject</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-3 text-muted">
+        No pending approvals.
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="dropdown">
+    <button class="btn btn-outline-primary mb-4 dropdown-toggle" type="button" id="reportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        Download Monthly Report (PDF)
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="reportDropdown">
+        <li><a class="dropdown-item" href="{{ url_for('generate_report', reports='all_info') }}">Combined Report (All Info)</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('generate_report', reports='sales_summary') }}">Sales Summary Report</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('generate_report', reports='attendance_summary') }}">Attendance Summary Report</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('generate_report', reports='ingredients_summary') }}">Ingredients Summary Report</a></li>
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// The updateStatus, approveItem, and rejectItem functions remain the same
+// as they are for other approval processes, not ingredient reorders.
+
+function approveItem(id, type) {
+  let url = '';
+  let bodyData = {};
+
+  if(type === 'account') {
+    url = '/approve_user';
+    bodyData = {user_id: id};
+  } else if(type === 'booth_change') {
+    url = '/approve_booth_change';
+    bodyData = {request_id: id};
+  } else {
+    alert('Unknown approval type.');
+    return;
+  }
+
+  if(confirm('Approve this ' + (type === 'account' ? 'user?' : 'booth change request?'))) {
+    fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(bodyData)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        location.reload();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(() => alert('Network error.'));
+  }
+}
+
+function rejectItem(id, type) {
+  let url = '';
+  let bodyData = {};
+
+  if(type === 'account') {
+    url = '/reject_user';
+    bodyData = {user_id: id};
+  } else if(type === 'booth_change') {
+    url = '/reject_booth_change';
+    bodyData = {request_id: id};
+  } else {
+    alert('Unknown approval type.');
+    return;
+  }
+
+  if(confirm('Reject this ' + (type === 'account' ? 'user?' : 'booth change request?'))) {
+    fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(bodyData)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        location.reload();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(() => alert('Network error.'));
+  }
+}
+</script>
+{% endblock %}

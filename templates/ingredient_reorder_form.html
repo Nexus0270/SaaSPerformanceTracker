@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Ingredient Reorder Request</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="#">SAKECHA - Ingredient Reorder</a>
+    <div class="d-flex">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light">Dashboard</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-outline-light ms-2">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4 col-md-6">
+  <h3>Ingredient Reorder Request</h3>
+  {% if message %}
+    <div class="alert alert-danger">{{ message }}</div>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="date" class="form-label">Date</label>
+      <input type="date" name="date" id="date" class="form-control" value="{{ today }}" min="{{ today }}" max="{{ today }}" required />
+    </div>
+    <div class="mb-3">
+      <label for="ingredient_name" class="form-label">Ingredient Name</label>
+      <select name="ingredient_name" id="ingredient_name" class="form-select" required>
+        <option value="">Select an ingredient</option>
+        <option value="Matcha">Matcha</option>
+        <option value="Milk">Milk</option>
+        <option value="Syrup">Syrup</option>
+        <option value="Cups + Lids + Straws">Cups + Lids + Straws</option>
+        <option value="CUPS SET">CUPS SET</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="quantity" class="form-label">Quantity Needed</label>
+      <input type="number" name="quantity" id="quantity" min="0" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+      <label for="cost" class="form-label">Cost (RM)</label>
+      <div class="input-group">
+        <span class="input-group-text">RM</span>
+        <input type="number" step="0.01" name="cost" id="cost" min="0" class="form-control" required />
+      </div>
+    </div>
+
+    <div class="mb-3 border rounded p-3 bg-light">
+      <h6 class="text-center text-primary mb-3">
+        <i class="bi bi-qr-code-scan"></i> Payment Instructions
+      </h6>
+      <div class="text-center">
+        <img src="{{ url_for('static', filename='images/BankQR.jpg') }}" 
+             alt="Pay via Bank QR Code" 
+             class="img-thumbnail border-primary" style="max-width: 250px;">
+      </div>
+      <div class="mt-2">
+        <p class="fw-light text-center">
+          <span class="badge bg-danger">Important:</span> 
+          Complete payment before submitting request
+        </p>
+        <ol class="small">
+          <li>Scan/Save the QR code</li>
+          <li>Make payment via bank app</li>
+          <li>Upload receipt proof above</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="receipt_attachment" class="form-label fw-bold">Payment Receipt (Required)</label>
+      <div class="input-group">
+        <input type="file" name="receipt_attachment" id="receipt_attachment" 
+               class="form-control" accept=".pdf,.jpg,.jpeg,.png" required
+               aria-describedby="fileHelp">
+        <span class="input-group-text">
+          <i class="bi bi-file-earmark-arrow-up"></i>
+        </span>
+      </div>
+      <div id="fileHelp" class="form-text text-danger">
+        <i class="bi bi-info-circle"></i> Upload clear photo/scan of bank transfer receipt
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit Request</button>
+  </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

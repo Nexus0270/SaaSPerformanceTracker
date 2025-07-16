@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+{% block title %}SAKECHA - Booth Health{% endblock %}
+{% block content %}
+
+<h1 class="mb-5">Booth Health Overview</h1>
+
+<div class="row mb-4">
+    {% if all_booth_performance %}
+        {% for booth in all_booth_performance %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header small" style="background-color: #6366f1; color: white;">
+                    <h6 class="mb-0">{{ booth.name }}</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="metric-title small text-muted">Total Sales</div>
+                            <div class="metric-value h5">{{ booth.total_sales | default(0) }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-title small text-muted">Days Active</div>
+                            <div class="metric-value h5">{{ booth.days_active }}</div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <div class="metric-title small text-muted">Avg Sales/Day</div>
+                            <div class="metric-value h5">{{ booth.avg_sales_per_day | default(0) }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-title small text-muted">Last Active</div>
+                            <div class="metric-text small">{{ booth.last_active_date or 'Never' }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% set performance_threshold = 10 %} {# Set your desired threshold here #}
+                <div class="card-footer text-center p-2">
+                    {% if booth.avg_sales_per_day is not none and booth.avg_sales_per_day < performance_threshold %}
+                    <div class="badge bg-danger text-white w-100 py-2">
+                        Underperforming
+                    </div>
+                    {% else %}
+                    <div class="badge bg-success text-white w-100 py-2">
+                        Performing
+                    </div>
+                    {% endif %}
+                </div>
+                </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center" role="alert">
+            No booth performance data available.
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card mb-4">
+    <div class="card-header" style="background-color: #10b981; color: white;">
+        Booth Attendance Records
+    </div>
+    <div class="card-body">
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-6">
+                <label for="booth-selector" class="form-label visually-hidden">Select a booth</label>
+                <select class="form-select" id="booth-selector">
+                    <option value="">Select a booth...</option>
+                    {% for booth in all_booth_performance %}
+                    <option value="{{ booth.id }}">{{ booth.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-primary w-100" id="fetch-records-btn">Show Records</button>
+            </div>
+        </div>
+
+        <div id="attendance-records-container" style="max-height: 400px; overflow-y: auto;">
+            <div class="alert alert-info" role="alert">
+                Select a booth above to view its attendance records.
+            </div>
+        </div>
+        <div id="attendance-message-container" class="mt-3"></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header" style="background-color: #f59e0b; color: white;">
+        Booth Activity Heatmap
+    </div>
+    <div class="card-body">
+        <canvas id="boothActivityChart"></canvas>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const attendanceMessageContainer = document.getElementById('attendance-message-container');
+
+        // Function to display messages
+        const displayMessage = (message, type) => {
+            attendanceMessageContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+        };
+
+        // Initialize the Booth Activity Chart
+        const initBoothChart = () => {
+            const ctx = document.getElementById('boothActivityChart').getContext('2d');
+            // Data passed from Flask is directly injected here
+            const boothNames = {{ all_booth_performance|map(attribute='name')|list|tojson }};
+            const daysActiveData = {{ all_booth_performance|map(attribute='days_active')|list|tojson }};
+            const avgSalesData = {{ all_booth_performance|map(attribute='avg_sales_per_day')|list|tojson }};
+
+            // Handle empty data for chart initialization
+            if (boothNames.length === 0) {
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('No data available for chart.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return null;
+            }
+
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: boothNames,
+                    datasets: [
+                        {
+                            label: 'Days Active',
+                            data: daysActiveData,
+                            backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                            borderColor: 'rgba(99, 102, 241, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Avg Sales/Day',
+                            data: avgSalesData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Booth'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.formattedValue;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        };
+
+        // Initialize chart on page load
+        const activityChart = initBoothChart();
+
+
+        // Format date for display
+        const formatDisplayDate = (dateString) => {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            try {
+                return new Date(dateString).toLocaleDateString(undefined, options);
+            } catch (e) {
+                return dateString;
+            }
+        };
+
+        // Handle booth selection and fetch attendance records
+        document.getElementById('fetch-records-btn').addEventListener('click', async function() {
+            const boothId = document.getElementById('booth-selector').value;
+            const boothName = document.getElementById('booth-selector').options[document.getElementById('booth-selector').selectedIndex].text;
+            
+            if (!boothId) {
+                displayMessage('Please select a booth first.', 'warning');
+                return;
+            }
+            
+            const container = document.getElementById('attendance-records-container');
+            
+            // Show loading state
+            container.innerHTML = `
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading attendance records for ${boothName}...</p>
+                </div>
+            `;
+            attendanceMessageContainer.innerHTML = '';
+
+            try {
+                const response = await fetch(`/get_booth_attendance/${boothId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    container.innerHTML = '';
+                    displayMessage(`Error: ${data.error}`, 'danger');
+                    return;
+                }
+                
+                if (data.length === 0) {
+                    container.innerHTML = '';
+                    displayMessage(`No attendance records found for ${boothName}.`, 'info');
+                    return;
+                }
+                
+                // Build the attendance records table
+                let html = `
+                    <div class="border rounded p-3 mb-3">
+                        <h5 class="mb-3">${boothName} Attendance Records</h5>
+                        <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                            <table class="table table-striped table-hover table-sm">
+                                <thead class="sticky-top bg-light">
+                                    <tr>
+                                        <th class="col-date">Date</th>
+                                        <th class="col-status">Status</th>
+                                        <th class="col-users">Attending Users</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                data.forEach(record => {
+                    const statusText = record.present_count > 0 ? 'Present' : 'Absent';
+                    const statusClass = record.present_count > 0 ? 'bg-success' : 'bg-secondary';
+                    const usersList = record.users.map(user => `
+                        <span class="user-badge">${user}</span>
+                    `).join('');
+                    
+                    html += `
+                        <tr>
+                            <td class="align-middle">${formatDisplayDate(record.date)}</td>
+                            <td class="align-middle">
+                                <span class="badge ${statusClass}">${statusText}</span>
+                            </td>
+                            <td>
+                                <div class="user-badges-container">
+                                    ${usersList}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2 text-end text-muted small">
+                            Showing ${data.length} records
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading attendance records:', error);
+                container.innerHTML = '';
+                displayMessage(`Failed to load attendance records: ${error.message}`, 'danger');
+            }
+        });
+
+        // Improve select element appearance
+        document.getElementById('booth-selector').addEventListener('change', function() {
+            if (this.value) {
+                this.classList.add('selected');
+            } else {
+                this.classList.remove('selected');
+            }
+        });
+    });
+</script>
+
+<style>
+    /* Ensure Bootstrap's row/col are properly utilized for responsiveness */
+    .row {
+        margin-left: -15px;
+        margin-right: -15px;
+    }
+    .col-md-4, .col-md-6, .col-12 {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    /* Card styling */
+    .card {
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .card-header {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        font-weight: bold;
+    }
+
+    /* Metric display in cards */
+    .metric-title {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+    }
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    .metric-text {
+        font-size: 0.9rem;
+        color: #4b5563;
+    }
+
+    /* Table specific styles */
+    .table-responsive {
+        max-height: 400px;
+        overflow-y: auto;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    table {
+        margin-bottom: 0;
+    }
+
+    table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f9fafb;
+        z-index: 10;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+        padding: 0.75rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        color: #4b5563;
+    }
+
+    table tbody tr:hover {
+        background-color: #f3f4f6;
+    }
+
+    /* Attendance records container specific styles */
+    #attendance-records-container {
+        max-height: 500px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        margin-top: 15px;
+    }
+    
+    #attendance-records-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #attendance-records-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    #attendance-records-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    #attendance-records-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    
+    .col-date { width: 120px; }
+    .col-status { width: 100px; }
+    .col-users { width: auto; }
+    
+    /* Styling for selected dropdown */
+    select.form-select.selected {
+        border-color: #10b981;
+        background-color: #f0fdf4;
+        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
+    }
+    
+    /* New styles for user badges */
+    .user-badges-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        max-height: 120px;
+        overflow-y: auto;
+        padding: 2px;
+    }
+
+    .user-badge {
+        display: inline-block;
+        background-color: #6366f1;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* Chart.js specific style for responsiveness */
+    #boothActivityChart {
+        max-width: 100%;
+        height: 300px;
+    }
+
+    /* General utility classes if not using full Bootstrap/Tailwind CSS */
+    .mb-0 { margin-bottom: 0 !important; }
+    .mb-3 { margin-bottom: 1rem !important; }
+    .mb-4 { margin-bottom: 1.5rem !important; }
+    .mb-5 { margin-bottom: 3rem !important; }
+    .mt-2 { margin-top: 0.5rem !important; }
+    .mt-3 { margin-top: 1rem !important; }
+    .p-3 { padding: 1rem !important; }
+    .p-4 { padding: 1.5rem !important; }
+    .text-center { text-align: center !important; }
+    .text-end { text-align: right !important; }
+    .text-muted { color: #6c757d !important; }
+    .h5 { font-size: 1.25rem !important; }
+    .small { font-size: 0.875em !important; }
+    .w-100 { width: 100% !important; }
+    .d-flex { display: flex !important; }
+    .justify-content-flex-end { justify-content: flex-end !important; }
+    .align-items-center { align-items: center !important; }
+
+    /* Bootstrap-like alert styles (if not using full Bootstrap) */
+    .alert {
+        padding: 1rem 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+    }
+    .alert-info {
+        color: #055160;
+        background-color: #cff4fc;
+        border-color: #b6effb;
+    }
+    .alert-warning {
+        color: #664d03;
+        background-color: #fff3cd;
+        border-color: #ffecb5;
+    }
+    .alert-danger {
+        color: #842029;
+        background-color: #f8d7da;
+        border-color: #f5c2c7;
+    }
+    .alert-success {
+        color: #0f5132;
+        background-color: #d1e7dd;
+        border-color: #badbcc;
+    }
+    .alert-dismissible {
+        padding-right: 3rem;
+        position: relative;
+    }
+    .alert-dismissible .btn-close {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 2;
+        padding: 1rem 1rem;
+    }
+</style>
+{% endblock %}

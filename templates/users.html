@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}SAKECHA Users Management{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="mb-0">Users Management</h1>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, msg in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if users %}
+<!-- Users and Booth Assignment Section -->
+<div class="card mb-5">
+  <div class="card-header">
+    <h2 class="mb-0 text-dark">User Assignments</h2>
+  </div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('users') }}">
+      <input type="hidden" name="form_type" value="assignments" />
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Booth Assignment</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+              <tr>
+                <td>{{ user.username }}</td>
+                <td>
+                  <input type="email" 
+                         name="email_{{ user.id }}" 
+                         class="form-control form-control-sm" 
+                         value="{{ user.email }}" 
+                         required
+                         pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                         title="Please enter a valid email address" />
+                </td>
+                <td>
+                  <span class="badge {% if user.role == 'admin' %}bg-primary{% else %}bg-secondary{% endif %}">
+                    {{ user.role }}
+                  </span>
+                </td>
+                <td>
+                  {% if user.role == 'franchisee' %}
+                    <select name="booth_{{ user.id }}" class="form-select form-select-sm">
+                      <option value="" {% if not user.booth %}selected{% endif %}>-</option>
+                      {% for booth in all_booths %}
+                        <option value="{{ booth.id }}" {% if user.booth and booth.id == user.booth.id %}selected{% endif %}>{{ booth.name }}</option>
+                      {% endfor %}
+                    </select>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if user.id != current_user.id %}
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser({{ user.id }})" title="Delete User">
+                      Delete
+                    </button>
+                  {% else %}
+                    <span class="text-muted" title="Cannot delete your own account">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Booths Information Section -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h2 class="mb-0 text-dark">Booths Information</h2>
+    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#createBoothModal">
+      Create Booth
+    </button>
+  </div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('users') }}">
+      <input type="hidden" name="form_type" value="locations" />
+      {% if booths_with_counts %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Booth Name</th>
+                <th>Number of Employees</th>
+                <th>Location</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for booth, count in booths_with_counts %}
+                <tr>
+                  <td>{{ booth.name }}</td>
+                  <td>{{ count }}</td>
+                  <td>
+                    <input type="text" name="location_{{ booth.id }}" class="form-control form-control-sm"
+                          value="{{ booth.location or '' }}" placeholder="Enter location" />
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-danger btn-delete-booth" data-booth-id="{{ booth.id }}" title="Delete Booth">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      {% else %}
+        <p class="text-muted">No booths available.</p>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% else %}
+  <div class="alert alert-info">No registered users found.</div>
+{% endif %}
+
+<!-- Create Booth Modal -->
+<div class="modal fade" id="createBoothModal" tabindex="-1" aria-labelledby="createBoothModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{{ url_for('users') }}" class="modal-content">
+      <input type="hidden" name="form_type" value="create_booth" />
+      <div class="modal-header">
+        <h5 class="modal-title" id="createBoothModalLabel">Create New Booth</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="booth_name" class="form-label">Booth Name</label>
+          <input type="text" class="form-control" id="booth_name" name="booth_name" required />
+        </div>
+        <div class="mb-3">
+          <label for="booth_location" class="form-label">Location</label>
+          <input type="text" class="form-control" id="booth_location" name="booth_location" placeholder="Optional" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-success">Create Booth</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteUser(userId) {
+  if (confirm('Are you sure you want to delete this user?')) {
+    fetch('/delete_user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Error deleting user: ' + data.message);
+      }
+    })
+    .catch(error => {
+      alert('Error: ' + error);
+    });
+  }
+}
+
+document.querySelectorAll('.btn-delete-booth').forEach(button => {
+  button.addEventListener('click', () => {
+    const boothId = button.getAttribute('data-booth-id');
+    if (confirm('Are you sure you want to delete this booth? This will also unassign users from this booth.')) {
+      fetch('/delete_booth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ booth_id: boothId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Error deleting booth: ' + data.message);
+        }
+      })
+      .catch(error => {
+        alert('Error: ' + error);
+      });
+    }
+  });
+});
+
+// Client-side email validation
+document.querySelector('form').addEventListener('submit', function(e) {
+  const emailInputs = document.querySelectorAll('input[type="email"]');
+  let isValid = true;
+  
+  emailInputs.forEach(input => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(input.value)) {
+      input.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      input.classList.remove('is-invalid');
+    }
+  });
+  
+  if (!isValid) {
+    e.preventDefault();
+    alert('Please correct the invalid email addresses before submitting.');
+  }
+});
+</script>
+{% endblock %}
